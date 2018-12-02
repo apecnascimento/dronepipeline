@@ -1,0 +1,38 @@
+version: "3"
+volumes:
+  gogs-data:
+  drone-data:
+
+services:
+  gogs:
+    image: gogs/gogs
+    ports:
+      - "3000:3000"
+    volumes:
+      - gogs-data:/data
+
+  drone-server:
+    image: drone/drone:0.8.1
+    ports:
+      - "8000:8000"
+      - "9000:9000"
+    volumes:
+      - drone-data:/var/lib/drone/
+    depends_on:
+      - gogs
+    environment:
+      - DRONE_OPEN=true
+      - DRONE_HOST=http://${HOST}:8000
+      - DRONE_GOGS=true
+      - DRONE_GOGS_URL=http://${HOST}:3000
+      - DRONE_SECRET=${DRONE_SECRET}
+
+  drone-agent:
+    image: drone/agent:0.8.1
+    command: agent
+    depends_on: [ drone-server ]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - DRONE_SERVER=drone-server:9000
+      - DRONE_SECRET=${DRONE_SECRET}
