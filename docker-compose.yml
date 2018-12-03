@@ -1,38 +1,42 @@
 version: "3"
 volumes:
-  gogs-data:
+  gitea-data:
   drone-data:
+  nexus-data:
 
 services:
-  gogs:
-    image: gogs/gogs
+  gitea:
+    image: gitea/gitea
     ports:
-      - "3000:3000"
+      - 3000:3000
+      
     volumes:
-      - gogs-data:/data
+      - gitea-data:/data
 
   drone-server:
-    image: drone/drone:0.8.1
+    image: drone/drone:1.0.0-rc.1
     ports:
-      - "8000:8000"
-      - "9000:9000"
+      - "81:80"
+        
     volumes:
-      - drone-data:/var/lib/drone/
-    depends_on:
-      - gogs
-    environment:
-      - DRONE_OPEN=true
-      - DRONE_HOST=http://${HOST}:8000
-      - DRONE_GOGS=true
-      - DRONE_GOGS_URL=http://${HOST}:3000
-      - DRONE_SECRET=${DRONE_SECRET}
-
-  drone-agent:
-    image: drone/agent:0.8.1
-    command: agent
-    depends_on: [ drone-server ]
-    volumes:
+      - drone-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - gitea
+      - nexus
     environment:
-      - DRONE_SERVER=drone-server:9000
-      - DRONE_SECRET=${DRONE_SECRET}
+      - DRONE_GIT_ALWAYS_AUTH=true 
+      - DRONE_GITEA_SERVER=http://gitea:3000
+      - DRONE_RUNNER_CAPACITY=2
+      - DRONE_SERVER_HOST=${HOST}:81
+      - DRONE_SERVER_PROTO=http
+      - DRONE_TLS_AUTOCERT=false
+  
+  nexus:
+   image: sonatype/nexus3
+   volumes:
+    - nexus-data:/nexus-data
+   ports:
+    - 8081:8081
+    - 5000-5001:5000-5001
+
