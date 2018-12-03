@@ -1,0 +1,42 @@
+version: "3"
+volumes:
+  gitea-data:
+  drone-data:
+  nexus-data:
+
+services:
+  gitea:
+    image: gitea/gitea
+    ports:
+      - 3000:3000
+      
+    volumes:
+      - gitea-data:/data
+
+  drone-server:
+    image: drone/drone:1.0.0-rc.1
+    ports:
+      - "81:80"
+        
+    volumes:
+      - drone-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - gitea
+      - nexus
+    environment:
+      - DRONE_GIT_ALWAYS_AUTH=true 
+      - DRONE_GITEA_SERVER=http://gitea:3000
+      - DRONE_RUNNER_CAPACITY=2
+      - DRONE_SERVER_HOST=${HOST}:81
+      - DRONE_SERVER_PROTO=http
+      - DRONE_TLS_AUTOCERT=false
+  
+  nexus:
+   image: sonatype/nexus3
+   volumes:
+    - nexus-data:/nexus-data
+   ports:
+    - 8081:8081
+    - 5000-5001:5000-5001
+
