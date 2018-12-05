@@ -31,7 +31,9 @@ services:
       - DRONE_SERVER_HOST=${HOST}:81
       - DRONE_SERVER_PROTO=http
       - DRONE_TLS_AUTOCERT=false
-  
+      - DRONE_LOGS_DEBUG=true
+      - DRONE_LOGS_COLOR=true
+      - DRONE_LOGS_PRETTY=true  
   nexus:
    image: sonatype/nexus3
    volumes:
